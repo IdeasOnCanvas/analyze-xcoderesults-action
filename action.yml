@@ -32,6 +32,10 @@ inputs:
     require: true
     description: "Add annotations for all warnings"
     default: "false"
+errorAnnotations:
+    require: true
+    description: "Add annotations for all errors"
+    default: "false"    
   showSDKInfo:
     required: true
     description: "Print the SDK Version"

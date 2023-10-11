@@ -39,6 +39,7 @@ interface ResultIssueSummaries {
   _type: TypeInfo
   testFailureSummaries: TypedArray<TestFailureIssueSummary>
   warningSummaries: TypedArray<IssueSummary>
+  errorSummaries: TypedArray<IssueSummary>
 }
 
 interface URL {
@@ -77,6 +78,7 @@ interface ResultMetrics {
   testsCount?: TypedValue<number>
   testsFailedCount?: TypedValue<number>
   warningCount?: TypedValue<number>
+  errorCount?: TypedValue<number>
 }
 
 interface ActionSDKRecord {
@@ -154,12 +156,12 @@ interface GitHubAnnotation {
   raw_details?: string
 }
 
-
 export class GenerationSettings {
   testSummaryTable: boolean = true;
   testFailureAnnotations: boolean = true;
   summary: boolean = true;
   warningAnnotations: boolean = true;
+  errorAnnotations: boolean = true;
   showSDKInfo: boolean = true;
   timingSummary: boolean = true;
 
@@ -168,6 +170,7 @@ export class GenerationSettings {
     this.testFailureAnnotations = (core.getInput('testFailureAnnotations') === "true")
     this.summary = (core.getInput('summary') === "true")
     this.warningAnnotations = (core.getInput('warningAnnotations') === "true")
+    this.errorAnnotations = (core.getInput('errorAnnotations') === "true")
     this.showSDKInfo = (core.getInput('showSDKInfo') === "true")
     this.timingSummary = (core.getInput('timingSummary') === "true")
 
@@ -203,6 +206,16 @@ export async function generateGitHubCheckOutput(settings: GenerationSettings, fi
         }
     })
   }
+
+  if (settings.errorAnnotations) {
+    let errorAnnotations = summary.issues.errorSummaries?._values.forEach(error => {
+        let annotation = errorsToGitHubAnnotation(error)
+        if (annotation) {
+          annotations.push(annotation)
+        }
+    })
+  }
+
   // Github only support 50 annotations
   annotations = annotations.slice(0,49);
 
@@ -260,7 +273,6 @@ export async function convertResultsToJSON(
   return JSON.parse(output) as ResultSummary
 }
 
-
 export function testSummary(metrics: ResultMetrics): string {
   let testCount = metrics?.testsCount?._value ?? 0
   let failed = metrics?.testsFailedCount?._value ?? 0
@@ -274,9 +286,6 @@ export function testSummary(metrics: ResultMetrics): string {
 `
 }
 
-
-
-
 /**
  * Generates a bit of mark down that is shown at the top of the
  * check page
@@ -286,10 +295,11 @@ export function buildSummary(metrics: ResultMetrics) {
   let failed = metrics?.testsFailedCount?._value ?? 0
   let passed = testCount - failed
   let warnings = metrics?.warningCount?._value ?? 0
+  let errors = metrics?.errorCount?._value ?? 0
 return `
 ## Summary
 🧪 ${passed}/${testCount} tests passed
-⚠️ Build finished with **${warnings}** Warnings
+🔨 Build finished with **${errors}** Errors and **${warnings}** Warnings
 `
 }
 
@@ -337,6 +347,26 @@ export function warningsToGitHubAnnotation(issue: IssueSummary): GitHubAnnotatio
     start_line: info.startLine ?? 0,
     end_line: info.endLine ?? info.startLine ?? 0,
     annotation_level: AnnotationLevel.warning,
+    title: issue.message._value,
+    message: issue.message._value
+  }
+  return annotation
+}
+
+/**
+ * Generate GitHub annotations from an IssueSummary Object
+ */
+export function errorsToGitHubAnnotation(issue: IssueSummary): GitHubAnnotation | null {
+  let location = issue.documentLocationInCreatingWorkspace;
+  if (location == undefined) {
+    return null;
+  }
+  let info = parseURLToLocation(issue.documentLocationInCreatingWorkspace.url._value)
+  let annotation: GitHubAnnotation = {
+    path: info.file,
+    start_line: info.startLine ?? 0,
+    end_line: info.endLine ?? info.startLine ?? 0,
+    annotation_level: AnnotationLevel.failure,
     title: issue.message._value,
     message: issue.message._value
   }

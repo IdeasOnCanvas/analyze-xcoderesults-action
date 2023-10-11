@@ -32,7 +32,7 @@ inputs:
     require: true
     description: "Add annotations for all warnings"
     default: "false"
-errorAnnotations:
+  errorAnnotations:
     require: true
     description: "Add annotations for all errors"
     default: "false"    

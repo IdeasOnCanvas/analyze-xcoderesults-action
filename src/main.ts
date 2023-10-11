@@ -44,8 +44,14 @@ async function run(): Promise<void> {
 
     let settings = new xcresulttool.GenerationSettings()
     settings.readActionSettings()
-    let output = await xcresulttool.generateGitHubCheckOutput(settings, inputFile)
-    let conclusion = await xcresulttool.generateGitHubOutcome(settings, inputFile)
+    let output = await xcresulttool.generateGitHubCheckOutput(
+      settings,
+      inputFile
+    )
+    let conclusion = await xcresulttool.generateGitHubOutcome(
+      settings,
+      inputFile
+    )
     core.debug(
       `Creating a new Run on ${ownership.owner}/${ownership.repo}@${sha}`
     )
@@ -64,7 +70,11 @@ async function run(): Promise<void> {
     await octokit.checks.create(checkInfo)
     core.debug(`Done`)
   } catch (error) {
-    core.setFailed(error.message)
+    let errorMessage = 'Action failed'
+    if (error instanceof Error) {
+      errorMessage = error.message
+    }
+    core.setFailed(errorMessage)
   }
 }
 

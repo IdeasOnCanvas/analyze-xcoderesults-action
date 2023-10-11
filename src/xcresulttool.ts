@@ -157,37 +157,42 @@ interface GitHubAnnotation {
 }
 
 export class GenerationSettings {
-  testSummaryTable: boolean = true;
-  testFailureAnnotations: boolean = true;
-  summary: boolean = true;
-  warningAnnotations: boolean = true;
-  errorAnnotations: boolean = true;
-  showSDKInfo: boolean = true;
-  timingSummary: boolean = true;
+  testSummaryTable: boolean = true
+  testFailureAnnotations: boolean = true
+  summary: boolean = true
+  warningAnnotations: boolean = true
+  errorAnnotations: boolean = true
+  showSDKInfo: boolean = true
+  timingSummary: boolean = true
 
   readActionSettings() {
-    this.testSummaryTable = (core.getInput('testSummaryTable') === "true")
-    this.testFailureAnnotations = (core.getInput('testFailureAnnotations') === "true")
-    this.summary = (core.getInput('summary') === "true")
-    this.warningAnnotations = (core.getInput('warningAnnotations') === "true")
-    this.errorAnnotations = (core.getInput('errorAnnotations') === "true")
-    this.showSDKInfo = (core.getInput('showSDKInfo') === "true")
-    this.timingSummary = (core.getInput('timingSummary') === "true")
-
+    this.testSummaryTable = core.getInput('testSummaryTable') === 'true'
+    this.testFailureAnnotations =
+      core.getInput('testFailureAnnotations') === 'true'
+    this.summary = core.getInput('summary') === 'true'
+    this.warningAnnotations = core.getInput('warningAnnotations') === 'true'
+    this.errorAnnotations = core.getInput('errorAnnotations') === 'true'
+    this.showSDKInfo = core.getInput('showSDKInfo') === 'true'
+    this.timingSummary = core.getInput('timingSummary') === 'true'
   }
 }
 
-export async function generateGitHubOutcome(settings: GenerationSettings, file: string): Promise<string> {
-
+export async function generateGitHubOutcome(
+  settings: GenerationSettings,
+  file: string
+): Promise<string> {
   let summary: ResultSummary = await convertResultsToJSON(file)
   let success = true
   summary.actions?._values.forEach(action => {
-    success = (success && action.actionResult.status._value != "failed");
-  });
-  return success ? "success" : "failure";
+    success = success && action.actionResult.status._value != 'failed'
+  })
+  return success ? 'success' : 'failure'
 }
 
-export async function generateGitHubCheckOutput(settings: GenerationSettings, file: string): Promise<any> {
+export async function generateGitHubCheckOutput(
+  settings: GenerationSettings,
+  file: string
+): Promise<any> {
   let summary: ResultSummary = await convertResultsToJSON(file)
   let annotations: GitHubAnnotation[] = []
 
@@ -199,27 +204,31 @@ export async function generateGitHubCheckOutput(settings: GenerationSettings, fi
   }
 
   if (settings.warningAnnotations) {
-    let warningAnnotations = summary.issues.warningSummaries?._values.forEach(warning => {
+    let warningAnnotations = summary.issues.warningSummaries?._values.forEach(
+      warning => {
         let annotation = warningsToGitHubAnnotation(warning)
         if (annotation) {
           annotations.push(annotation)
         }
-    })
+      }
+    )
   }
 
   if (settings.errorAnnotations) {
-    let errorAnnotations = summary.issues.errorSummaries?._values.forEach(error => {
+    let errorAnnotations = summary.issues.errorSummaries?._values.forEach(
+      error => {
         let annotation = errorsToGitHubAnnotation(error)
         if (annotation) {
           annotations.push(annotation)
         }
-    })
+      }
+    )
   }
 
   // Github only support 50 annotations
-  annotations = annotations.slice(0,49);
+  annotations = annotations.slice(0, 49)
 
-  let summaryMd = ""
+  let summaryMd = ''
 
   if (settings.summary) {
     summaryMd += buildSummary(summary.metrics)
@@ -245,7 +254,7 @@ export async function generateGitHubCheckOutput(settings: GenerationSettings, fi
  */
 export async function convertResultsToJSON(
   file: string,
-  object: string|null = null
+  object: string | null = null
 ): Promise<ResultSummary> {
   let output = ''
   const options: ExecOptions = {}
@@ -265,7 +274,7 @@ export async function convertResultsToJSON(
   ]
 
   if (object != null) {
-    args.push("--id")
+    args.push('--id')
     args.push(object)
   }
 
@@ -296,7 +305,7 @@ export function buildSummary(metrics: ResultMetrics) {
   let passed = testCount - failed
   let warnings = metrics?.warningCount?._value ?? 0
   let errors = metrics?.errorCount?._value ?? 0
-return `
+  return `
 ## Summary
 🧪 ${passed}/${testCount} tests passed
 🔨 Build finished with **${errors}** Errors and **${warnings}** Warnings
@@ -336,12 +345,16 @@ export function parseURLToLocation(urlString: string): LocationInfo {
 /**
  * Generate GitHub annotations from an IssueSummary Object
  */
-export function warningsToGitHubAnnotation(issue: IssueSummary): GitHubAnnotation | null {
-  let location = issue.documentLocationInCreatingWorkspace;
+export function warningsToGitHubAnnotation(
+  issue: IssueSummary
+): GitHubAnnotation | null {
+  let location = issue.documentLocationInCreatingWorkspace
   if (location == undefined) {
-    return null;
+    return null
   }
-  let info = parseURLToLocation(issue.documentLocationInCreatingWorkspace.url._value)
+  let info = parseURLToLocation(
+    issue.documentLocationInCreatingWorkspace.url._value
+  )
   let annotation: GitHubAnnotation = {
     path: info.file,
     start_line: info.startLine ?? 0,
@@ -356,12 +369,16 @@ export function warningsToGitHubAnnotation(issue: IssueSummary): GitHubAnnotatio
 /**
  * Generate GitHub annotations from an IssueSummary Object
  */
-export function errorsToGitHubAnnotation(issue: IssueSummary): GitHubAnnotation | null {
-  let location = issue.documentLocationInCreatingWorkspace;
+export function errorsToGitHubAnnotation(
+  issue: IssueSummary
+): GitHubAnnotation | null {
+  let location = issue.documentLocationInCreatingWorkspace
   if (location == undefined) {
-    return null;
+    return null
   }
-  let info = parseURLToLocation(issue.documentLocationInCreatingWorkspace.url._value)
+  let info = parseURLToLocation(
+    issue.documentLocationInCreatingWorkspace.url._value
+  )
   let annotation: GitHubAnnotation = {
     path: info.file,
     start_line: info.startLine ?? 0,
@@ -382,7 +399,9 @@ export function errorsToGitHubAnnotation(issue: IssueSummary): GitHubAnnotation 
 export function testFailureToGitHubAnnotation(
   issue: TestFailureIssueSummary
 ): GitHubAnnotation {
-  let info = parseURLToLocation(issue.documentLocationInCreatingWorkspace.url._value)
+  let info = parseURLToLocation(
+    issue.documentLocationInCreatingWorkspace.url._value
+  )
   let annotation: GitHubAnnotation = {
     path: info.file,
     start_line: info.startLine ?? 0,

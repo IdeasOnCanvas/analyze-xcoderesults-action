@@ -373,7 +373,10 @@ exports.errorsToGitHubAnnotation = errorsToGitHubAnnotation;
  */
 function testFailureToGitHubAnnotation(issue) {
     var _a, _b, _c;
-    let info = parseURLToLocation(issue.documentLocationInCreatingWorkspace.url._value);
+    let documentLocation = issue.documentLocationInCreatingWorkspace;
+    let info = `url` in documentLocation
+        ? parseURLToLocation(documentLocation.url._value)
+        : { file: 'No file' };
     let annotation = {
         path: info.file,
         start_line: (_a = info.startLine) !== null && _a !== void 0 ? _a : 0,

@@ -399,9 +399,8 @@ export function errorsToGitHubAnnotation(
 export function testFailureToGitHubAnnotation(
   issue: TestFailureIssueSummary
 ): GitHubAnnotation {
-  let info = parseURLToLocation(
-    issue.documentLocationInCreatingWorkspace.url._value
-  )
+  let documentLocation = issue.documentLocationInCreatingWorkspace
+  let info = `url` in documentLocation ? parseURLToLocation(documentLocation.url._value) : { file: "No file" }
   let annotation: GitHubAnnotation = {
     path: info.file,
     start_line: info.startLine ?? 0,

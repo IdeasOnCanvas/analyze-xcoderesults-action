@@ -142,7 +142,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.testFailureToGitHubAnnotation = exports.errorsToGitHubAnnotation = exports.warningsToGitHubAnnotation = exports.parseURLToLocation = exports.buildSummary = exports.testSummary = exports.convertResultsToJSON = exports.generateGitHubCheckOutput = exports.generateGitHubCheckConclusion = exports.GenerationSettings = void 0;
+exports.testFailureToGitHubAnnotation = exports.errorsToGitHubAnnotation = exports.warningsToGitHubAnnotation = exports.parseURLToLocation = exports.testSummaryTable = exports.buildSummaryTable = exports.summary = exports.convertResultsToJSON = exports.generateGitHubCheckOutput = exports.generateGitHubCheckConclusion = exports.GenerationSettings = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 var AnnotationLevel;
@@ -153,6 +153,7 @@ var AnnotationLevel;
 })(AnnotationLevel || (AnnotationLevel = {}));
 class GenerationSettings {
     constructor() {
+        this.buildSummaryTable = true;
         this.testSummaryTable = true;
         this.testFailureAnnotations = true;
         this.summary = true;
@@ -162,6 +163,7 @@ class GenerationSettings {
         this.timingSummary = true;
     }
     readActionSettings() {
+        this.buildSummaryTable = core.getInput('buildSummaryTable') === 'true';
         this.testSummaryTable = core.getInput('testSummaryTable') === 'true';
         this.testFailureAnnotations =
             core.getInput('testFailureAnnotations') === 'true';
@@ -176,12 +178,12 @@ exports.GenerationSettings = GenerationSettings;
 function generateGitHubCheckConclusion(settings, file) {
     var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
-        let summary = yield convertResultsToJSON(file);
+        let resultJSON = yield convertResultsToJSON(file);
         let success = true;
-        (_a = summary.actions) === null || _a === void 0 ? void 0 : _a._values.forEach(action => {
+        (_a = resultJSON.actions) === null || _a === void 0 ? void 0 : _a._values.forEach(action => {
             success = success && action.actionResult.status._value != 'failed';
         });
-        let errorCount = (_d = (_c = (_b = summary.metrics) === null || _b === void 0 ? void 0 : _b.errorCount) === null || _c === void 0 ? void 0 : _c._value) !== null && _d !== void 0 ? _d : 0;
+        let errorCount = (_d = (_c = (_b = resultJSON.metrics) === null || _b === void 0 ? void 0 : _b.errorCount) === null || _c === void 0 ? void 0 : _c._value) !== null && _d !== void 0 ? _d : 0;
         success = success && errorCount == 0;
         return success ? 'success' : 'failure';
     });
@@ -190,16 +192,16 @@ exports.generateGitHubCheckConclusion = generateGitHubCheckConclusion;
 function generateGitHubCheckOutput(settings, file) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {
-        let summary = yield convertResultsToJSON(file);
+        let resultJSON = yield convertResultsToJSON(file);
         let annotations = [];
         if (settings.testSummaryTable) {
-            (_a = summary.issues.testFailureSummaries) === null || _a === void 0 ? void 0 : _a._values.forEach(failure => {
+            (_a = resultJSON.issues.testFailureSummaries) === null || _a === void 0 ? void 0 : _a._values.forEach(failure => {
                 let annotation = testFailureToGitHubAnnotation(failure);
                 annotations.push(annotation);
             });
         }
         if (settings.warningAnnotations) {
-            let warningAnnotations = (_b = summary.issues.warningSummaries) === null || _b === void 0 ? void 0 : _b._values.forEach(warning => {
+            let warningAnnotations = (_b = resultJSON.issues.warningSummaries) === null || _b === void 0 ? void 0 : _b._values.forEach(warning => {
                 let annotation = warningsToGitHubAnnotation(warning);
                 if (annotation) {
                     annotations.push(annotation);
@@ -207,7 +209,7 @@ function generateGitHubCheckOutput(settings, file) {
             });
         }
         if (settings.errorAnnotations) {
-            let errorAnnotations = (_c = summary.issues.errorSummaries) === null || _c === void 0 ? void 0 : _c._values.forEach(error => {
+            let errorAnnotations = (_c = resultJSON.issues.errorSummaries) === null || _c === void 0 ? void 0 : _c._values.forEach(error => {
                 let annotation = errorsToGitHubAnnotation(error);
                 if (annotation) {
                     annotations.push(annotation);
@@ -218,10 +220,13 @@ function generateGitHubCheckOutput(settings, file) {
         annotations = annotations.slice(0, 49);
         let summaryMd = '';
         if (settings.summary) {
-            summaryMd += buildSummary(summary.metrics);
+            summaryMd += summary(resultJSON.metrics);
+        }
+        if (settings.buildSummaryTable) {
+            summaryMd += buildSummaryTable(resultJSON.metrics);
         }
         if (settings.testSummaryTable) {
-            summaryMd += testSummary(summary.metrics);
+            summaryMd += testSummaryTable(resultJSON.metrics);
         }
         return {
             summary: summaryMd,
@@ -265,7 +270,38 @@ function convertResultsToJSON(file, object = null) {
     });
 }
 exports.convertResultsToJSON = convertResultsToJSON;
-function testSummary(metrics) {
+/**
+ * Generates a bit of mark down that is shown at the top of the
+ * check page
+ */
+function summary(metrics) {
+    var _a, _b, _c, _d, _e, _f, _g, _h;
+    let testCount = (_b = (_a = metrics === null || metrics === void 0 ? void 0 : metrics.testsCount) === null || _a === void 0 ? void 0 : _a._value) !== null && _b !== void 0 ? _b : 0;
+    let failed = (_d = (_c = metrics === null || metrics === void 0 ? void 0 : metrics.testsFailedCount) === null || _c === void 0 ? void 0 : _c._value) !== null && _d !== void 0 ? _d : 0;
+    let passed = testCount - failed;
+    let warningCount = (_f = (_e = metrics === null || metrics === void 0 ? void 0 : metrics.warningCount) === null || _e === void 0 ? void 0 : _e._value) !== null && _f !== void 0 ? _f : 0;
+    let errorCount = (_h = (_g = metrics === null || metrics === void 0 ? void 0 : metrics.errorCount) === null || _g === void 0 ? void 0 : _g._value) !== null && _h !== void 0 ? _h : 0;
+    return `
+## Summary
+🔨 Build finished with **${errorCount}** Errors and **${warningCount}** Warnings
+🧪 ${passed}/${testCount} tests passed
+`;
+}
+exports.summary = summary;
+function buildSummaryTable(metrics) {
+    var _a, _b, _c, _d;
+    let warningCount = (_b = (_a = metrics === null || metrics === void 0 ? void 0 : metrics.warningCount) === null || _a === void 0 ? void 0 : _a._value) !== null && _b !== void 0 ? _b : 0;
+    let errorCount = (_d = (_c = metrics === null || metrics === void 0 ? void 0 : metrics.errorCount) === null || _c === void 0 ? void 0 : _c._value) !== null && _d !== void 0 ? _d : 0;
+    return `
+
+## Build
+|Errors ⛔️ | Warnings|
+|:---------------|:----------------|
+| ${errorCount} | ${warningCount} |
+`;
+}
+exports.buildSummaryTable = buildSummaryTable;
+function testSummaryTable(metrics) {
     var _a, _b, _c, _d;
     let testCount = (_b = (_a = metrics === null || metrics === void 0 ? void 0 : metrics.testsCount) === null || _a === void 0 ? void 0 : _a._value) !== null && _b !== void 0 ? _b : 0;
     let failed = (_d = (_c = metrics === null || metrics === void 0 ? void 0 : metrics.testsFailedCount) === null || _c === void 0 ? void 0 : _c._value) !== null && _d !== void 0 ? _d : 0;
@@ -278,25 +314,7 @@ function testSummary(metrics) {
 | ${passed} | ${failed} | ${testCount} |
 `;
 }
-exports.testSummary = testSummary;
-/**
- * Generates a bit of mark down that is shown at the top of the
- * check page
- */
-function buildSummary(metrics) {
-    var _a, _b, _c, _d, _e, _f, _g, _h;
-    let testCount = (_b = (_a = metrics === null || metrics === void 0 ? void 0 : metrics.testsCount) === null || _a === void 0 ? void 0 : _a._value) !== null && _b !== void 0 ? _b : 0;
-    let failed = (_d = (_c = metrics === null || metrics === void 0 ? void 0 : metrics.testsFailedCount) === null || _c === void 0 ? void 0 : _c._value) !== null && _d !== void 0 ? _d : 0;
-    let passed = testCount - failed;
-    let warnings = (_f = (_e = metrics === null || metrics === void 0 ? void 0 : metrics.warningCount) === null || _e === void 0 ? void 0 : _e._value) !== null && _f !== void 0 ? _f : 0;
-    let errors = (_h = (_g = metrics === null || metrics === void 0 ? void 0 : metrics.errorCount) === null || _g === void 0 ? void 0 : _g._value) !== null && _h !== void 0 ? _h : 0;
-    return `
-## Summary
-🧪 ${passed}/${testCount} tests passed
-🔨 Build finished with **${errors}** Errors and **${warnings}** Warnings
-`;
-}
-exports.buildSummary = buildSummary;
+exports.testSummaryTable = testSummaryTable;
 function parseURLToLocation(urlString) {
     let url = new URL(urlString);
     let path = url.pathname.replace(core.getInput('pathPrefix') + '/', '');

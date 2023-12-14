@@ -157,6 +157,7 @@ interface GitHubAnnotation {
 }
 
 export class GenerationSettings {
+  buildSummaryTable: boolean = true
   testSummaryTable: boolean = true
   testFailureAnnotations: boolean = true
   summary: boolean = true
@@ -166,6 +167,7 @@ export class GenerationSettings {
   timingSummary: boolean = true
 
   readActionSettings() {
+    this.buildSummaryTable = core.getInput('buildSummaryTable') === 'true'
     this.testSummaryTable = core.getInput('testSummaryTable') === 'true'
     this.testFailureAnnotations =
       core.getInput('testFailureAnnotations') === 'true'
@@ -181,12 +183,12 @@ export async function generateGitHubCheckConclusion(
   settings: GenerationSettings,
   file: string
 ): Promise<string> {
-  let summary: ResultSummary = await convertResultsToJSON(file)
+  let resultJSON: ResultSummary = await convertResultsToJSON(file)
   let success = true
-  summary.actions?._values.forEach(action => {
+  resultJSON.actions?._values.forEach(action => {
     success = success && action.actionResult.status._value != 'failed'
   })
-  let errorCount = summary.metrics?.errorCount?._value ?? 0
+  let errorCount = resultJSON.metrics?.errorCount?._value ?? 0
   success = success && errorCount == 0
   return success ? 'success' : 'failure'
 }
@@ -195,18 +197,18 @@ export async function generateGitHubCheckOutput(
   settings: GenerationSettings,
   file: string
 ): Promise<any> {
-  let summary: ResultSummary = await convertResultsToJSON(file)
+  let resultJSON: ResultSummary = await convertResultsToJSON(file)
   let annotations: GitHubAnnotation[] = []
 
   if (settings.testSummaryTable) {
-    summary.issues.testFailureSummaries?._values.forEach(failure => {
+    resultJSON.issues.testFailureSummaries?._values.forEach(failure => {
       let annotation = testFailureToGitHubAnnotation(failure)
       annotations.push(annotation)
     })
   }
 
   if (settings.warningAnnotations) {
-    let warningAnnotations = summary.issues.warningSummaries?._values.forEach(
+    let warningAnnotations = resultJSON.issues.warningSummaries?._values.forEach(
       warning => {
         let annotation = warningsToGitHubAnnotation(warning)
         if (annotation) {
@@ -217,7 +219,7 @@ export async function generateGitHubCheckOutput(
   }
 
   if (settings.errorAnnotations) {
-    let errorAnnotations = summary.issues.errorSummaries?._values.forEach(
+    let errorAnnotations = resultJSON.issues.errorSummaries?._values.forEach(
       error => {
         let annotation = errorsToGitHubAnnotation(error)
         if (annotation) {
@@ -233,11 +235,15 @@ export async function generateGitHubCheckOutput(
   let summaryMd = ''
 
   if (settings.summary) {
-    summaryMd += buildSummary(summary.metrics)
+    summaryMd += summary(resultJSON.metrics)
+  }
+
+  if (settings.buildSummaryTable) {
+    summaryMd += buildSummaryTable(resultJSON.metrics)
   }
 
   if (settings.testSummaryTable) {
-    summaryMd += testSummary(summary.metrics)
+    summaryMd += testSummaryTable(resultJSON.metrics)
   }
 
   return {
@@ -284,7 +290,36 @@ export async function convertResultsToJSON(
   return JSON.parse(output) as ResultSummary
 }
 
-export function testSummary(metrics: ResultMetrics): string {
+/**
+ * Generates a bit of mark down that is shown at the top of the
+ * check page
+ */
+export function summary(metrics: ResultMetrics) {
+  let testCount = metrics?.testsCount?._value ?? 0
+  let failed = metrics?.testsFailedCount?._value ?? 0
+  let passed = testCount - failed
+  let warningCount = metrics?.warningCount?._value ?? 0
+  let errorCount = metrics?.errorCount?._value ?? 0
+  return `
+## Summary
+🔨 Build finished with **${errorCount}** Errors and **${warningCount}** Warnings
+🧪 ${passed}/${testCount} tests passed
+`
+}
+
+export function buildSummaryTable(metrics: ResultMetrics): string {
+  let warningCount = metrics?.warningCount?._value ?? 0
+  let errorCount = metrics?.errorCount?._value ?? 0
+  return `
+
+## Build
+|Errors ⛔️ | Warnings|
+|:---------------|:----------------|
+| ${errorCount} | ${warningCount} |
+`
+}
+
+export function testSummaryTable(metrics: ResultMetrics): string {
   let testCount = metrics?.testsCount?._value ?? 0
   let failed = metrics?.testsFailedCount?._value ?? 0
   let passed = testCount - failed
@@ -294,23 +329,6 @@ export function testSummary(metrics: ResultMetrics): string {
 |Tests Passed ✅ | Tests Failed ⛔️ | Tests Total |
 |:---------------|:----------------|:------------|
 | ${passed} | ${failed} | ${testCount} |
-`
-}
-
-/**
- * Generates a bit of mark down that is shown at the top of the
- * check page
- */
-export function buildSummary(metrics: ResultMetrics) {
-  let testCount = metrics?.testsCount?._value ?? 0
-  let failed = metrics?.testsFailedCount?._value ?? 0
-  let passed = testCount - failed
-  let warnings = metrics?.warningCount?._value ?? 0
-  let errors = metrics?.errorCount?._value ?? 0
-  return `
-## Summary
-🧪 ${passed}/${testCount} tests passed
-🔨 Build finished with **${errors}** Errors and **${warnings}** Warnings
 `
 }
 

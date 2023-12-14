@@ -21,7 +21,7 @@ test('test summary generation', async () => {
   let summary = await xcresultool.convertResultsToJSON(FAILED_TEST_FILE)
   expect(summary).toBeDefined
   expect(summary.metrics).toBeDefined
-  let markdown = xcresultool.testSummary(summary.metrics)
+  let markdown = xcresultool.testSummaryTable(summary.metrics)
   expect(markdown.split('\n').length).toBe(7)
   expect(markdown.split('\n')[5]).toBe('| 1 | 1 | 2 |')
 })

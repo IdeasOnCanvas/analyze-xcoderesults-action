@@ -16,6 +16,10 @@ inputs:
     required: true
     description: "Title for the check results"
     default: "Test Results"
+  buildSummaryTable:
+    required: true
+    description: "Include a table with the number of build errors and warnings"
+    default: "true"
   testSummaryTable:
     required: true
     description: "Include a table with the number of passed and failed tests"

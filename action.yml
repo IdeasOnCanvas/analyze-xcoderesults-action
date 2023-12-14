@@ -31,7 +31,7 @@ inputs:
   summary:
     required: true
     description: "Include an summary with the number of failed tests and warnings"
-    default: "true"
+    default: "false"
   warningAnnotations:
     require: true
     description: "Add annotations for all warnings"

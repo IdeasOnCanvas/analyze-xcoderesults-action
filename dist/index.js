@@ -295,7 +295,7 @@ function buildSummaryTable(metrics) {
     return `
 
 ## Build
-|Errors ⛔️ | Warnings|
+|Errors ⛔️ | Warnings ⚠️|
 |:---------------|:----------------|
 | ${errorCount} | ${warningCount} |
 `;

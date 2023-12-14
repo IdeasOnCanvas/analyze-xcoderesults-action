@@ -313,7 +313,7 @@ export function buildSummaryTable(metrics: ResultMetrics): string {
   return `
 
 ## Build
-|Errors ⛔️ | Warnings|
+|Errors ⛔️ | Warnings ⚠️|
 |:---------------|:----------------|
 | ${errorCount} | ${warningCount} |
 `

@@ -313,7 +313,7 @@ export function buildSummaryTable(metrics: ResultMetrics): string {
   return `
 
 ## Build
-|Errors ⛔️ | Warnings ⚠️|
+|Errors ⛔️| Warnings ⚠️|
 |:---------------|:----------------|
 | ${errorCount} | ${warningCount} |
 `
@@ -326,9 +326,9 @@ export function testSummaryTable(metrics: ResultMetrics): string {
   return `
 
 ## Tests
-|Tests Passed ✅ | Tests Failed ⛔️ | Tests Total |
+|Tests Total 🧪|Tests Passed ✅|Tests Failed ⛔️|
 |:---------------|:----------------|:------------|
-| ${passed} | ${failed} | ${testCount} |
+| ${testCount} | ${passed} | ${failed} |
 `
 }
 

@@ -295,7 +295,7 @@ function buildSummaryTable(metrics) {
     return `
 
 ## Build
-|Errors ⛔️ | Warnings ⚠️|
+|Errors ⛔️| Warnings ⚠️|
 |:---------------|:----------------|
 | ${errorCount} | ${warningCount} |
 `;
@@ -309,9 +309,9 @@ function testSummaryTable(metrics) {
     return `
 
 ## Tests
-|Tests Passed ✅ | Tests Failed ⛔️ | Tests Total |
+|Tests Total 🧪|Tests Passed ✅|Tests Failed ⛔️|
 |:---------------|:----------------|:------------|
-| ${passed} | ${failed} | ${testCount} |
+| ${testCount} | ${passed} | ${failed} |
 `;
 }
 exports.testSummaryTable = testSummaryTable;

@@ -38,7 +38,7 @@ test('test check output', async () => {
 })
 
 test('check failure outcome', async () => {
-  let output = await xcresultool.generateGitHubOutcome(
+  let output = await xcresultool.generateGitHubCheckConclusion(
     new xcresultool.GenerationSettings(),
     FAILED_TEST_FILE
   )
@@ -46,7 +46,7 @@ test('check failure outcome', async () => {
 })
 
 test('check success outcome', async () => {
-  let output = await xcresultool.generateGitHubOutcome(
+  let output = await xcresultool.generateGitHubCheckConclusion(
     new xcresultool.GenerationSettings(),
     SUCCEEDED_TEST_FILE
   )

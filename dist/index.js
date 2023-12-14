@@ -75,7 +75,7 @@ function run() {
             let settings = new xcresulttool.GenerationSettings();
             settings.readActionSettings();
             let output = yield xcresulttool.generateGitHubCheckOutput(settings, inputFile);
-            let conclusion = yield xcresulttool.generateGitHubOutcome(settings, inputFile);
+            let conclusion = yield xcresulttool.generateGitHubCheckConclusion(settings, inputFile);
             core.debug(`Creating a new Run on ${ownership.owner}/${ownership.repo}@${sha}`);
             let octokit = new ok.Octokit();
             let checkInfo = {
@@ -142,7 +142,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.testFailureToGitHubAnnotation = exports.errorsToGitHubAnnotation = exports.warningsToGitHubAnnotation = exports.parseURLToLocation = exports.buildSummary = exports.testSummary = exports.convertResultsToJSON = exports.generateGitHubCheckOutput = exports.generateGitHubOutcome = exports.GenerationSettings = void 0;
+exports.testFailureToGitHubAnnotation = exports.errorsToGitHubAnnotation = exports.warningsToGitHubAnnotation = exports.parseURLToLocation = exports.buildSummary = exports.testSummary = exports.convertResultsToJSON = exports.generateGitHubCheckOutput = exports.generateGitHubCheckConclusion = exports.GenerationSettings = void 0;
 const core = __importStar(__nccwpck_require__(2186));
 const exec = __importStar(__nccwpck_require__(1514));
 var AnnotationLevel;
@@ -173,18 +173,20 @@ class GenerationSettings {
     }
 }
 exports.GenerationSettings = GenerationSettings;
-function generateGitHubOutcome(settings, file) {
-    var _a;
+function generateGitHubCheckConclusion(settings, file) {
+    var _a, _b, _c, _d;
     return __awaiter(this, void 0, void 0, function* () {
         let summary = yield convertResultsToJSON(file);
         let success = true;
         (_a = summary.actions) === null || _a === void 0 ? void 0 : _a._values.forEach(action => {
             success = success && action.actionResult.status._value != 'failed';
         });
+        let errorCount = (_d = (_c = (_b = summary.metrics) === null || _b === void 0 ? void 0 : _b.errorCount) === null || _c === void 0 ? void 0 : _c._value) !== null && _d !== void 0 ? _d : 0;
+        success = success && errorCount == 0;
         return success ? 'success' : 'failure';
     });
 }
-exports.generateGitHubOutcome = generateGitHubOutcome;
+exports.generateGitHubCheckConclusion = generateGitHubCheckConclusion;
 function generateGitHubCheckOutput(settings, file) {
     var _a, _b, _c;
     return __awaiter(this, void 0, void 0, function* () {

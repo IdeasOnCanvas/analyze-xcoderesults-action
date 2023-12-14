@@ -177,7 +177,7 @@ export class GenerationSettings {
   }
 }
 
-export async function generateGitHubOutcome(
+export async function generateGitHubCheckConclusion(
   settings: GenerationSettings,
   file: string
 ): Promise<string> {
@@ -186,6 +186,8 @@ export async function generateGitHubOutcome(
   summary.actions?._values.forEach(action => {
     success = success && action.actionResult.status._value != 'failed'
   })
+  let errorCount = summary.metrics?.errorCount?._value ?? 0
+  success = success && errorCount == 0
   return success ? 'success' : 'failure'
 }
 

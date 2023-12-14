@@ -48,7 +48,7 @@ async function run(): Promise<void> {
       settings,
       inputFile
     )
-    let conclusion = await xcresulttool.generateGitHubOutcome(
+    let conclusion = await xcresulttool.generateGitHubCheckConclusion(
       settings,
       inputFile
     )

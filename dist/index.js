@@ -256,6 +256,7 @@ function convertResultsToJSON(file, object = null) {
         let args = [
             'xcresulttool',
             'get',
+            '--legacy',
             '--path',
             file,
             '--format',

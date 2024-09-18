@@ -275,6 +275,7 @@ export async function convertResultsToJSON(
   let args: string[] = [
     'xcresulttool',
     'get',
+    '--legacy',
     '--path',
     file,
     '--format',

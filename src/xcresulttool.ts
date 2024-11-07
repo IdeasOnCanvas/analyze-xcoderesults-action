@@ -348,11 +348,11 @@ export function parseURLToLocation(urlString: string): LocationInfo {
       let value = parseInt(pair[1])
       switch (pair[0]) {
         case 'StartingLineNumber': {
-          info.startLine = value
+          info.startLine = value + 1
           break
         }
         case 'EndingLineNumber': {
-          info.endLine = value
+          info.endLine = value + 1
           break
         }
         default:

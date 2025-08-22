@@ -1,7 +1,6 @@
 import * as core from '@actions/core'
 import * as exec from '@actions/exec'
 import {ExecOptions} from '@actions/exec/lib/interfaces'
-import {RestEndpointMethodTypes} from '@octokit/rest'
 
 export type Annotations = {
   path: string

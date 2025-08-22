@@ -5,7 +5,7 @@ import * as path from 'path'
 
 async function main() {
   const args = process.argv.slice(2)
-  
+
   if (args.length === 0) {
     console.log(`
 Usage: npx ts-node src/cli.ts <xcresult-path> [command]
@@ -48,21 +48,25 @@ Examples:
         const summary = xcresulttool.generateSummary(data, settings)
         const annotations = xcresulttool.generateAnnotations(data, settings)
         const conclusion = xcresulttool.determineConclusion(data)
-        
+
         console.log(`📊 **Metrics:**`)
-        console.log(`   Tests: ${metrics.testsPassed}/${metrics.testsTotal} passed`)
+        console.log(
+          `   Tests: ${metrics.testsPassed}/${metrics.testsTotal} passed`
+        )
         console.log(`   Errors: ${metrics.errors}`)
         console.log(`   Warnings: ${metrics.warnings}`)
         console.log(`   Overall: ${conclusion}\n`)
-        
+
         if (summary) {
           console.log(summary)
         }
-        
+
         if (annotations.length > 0) {
           console.log(`\n🚨 **Annotations (${annotations.length}):**`)
           annotations.forEach((ann, i) => {
-            console.log(`${i + 1}. [${ann.annotation_level.toUpperCase()}] ${ann.title}`)
+            console.log(
+              `${i + 1}. [${ann.annotation_level.toUpperCase()}] ${ann.title}`
+            )
             console.log(`   ${ann.path}:${ann.start_line} - ${ann.message}`)
           })
         }
@@ -70,7 +74,10 @@ Examples:
 
       case 'summary':
         const summaryData = await xcresulttool.analyzeXcResult(xcresultPath)
-        const summaryMarkdown = xcresulttool.generateSummary(summaryData, settings)
+        const summaryMarkdown = xcresulttool.generateSummary(
+          summaryData,
+          settings
+        )
         console.log(summaryMarkdown)
         break
 
@@ -88,7 +95,10 @@ Examples:
 
       case 'annotations':
         const annotationData = await xcresulttool.analyzeXcResult(xcresultPath)
-        const allAnnotations = xcresulttool.generateAnnotations(annotationData, settings)
+        const allAnnotations = xcresulttool.generateAnnotations(
+          annotationData,
+          settings
+        )
         console.log(JSON.stringify(allAnnotations, null, 2))
         break
 
@@ -97,7 +107,10 @@ Examples:
         process.exit(1)
     }
   } catch (error) {
-    console.error('❌ Error:', error instanceof Error ? error.message : String(error))
+    console.error(
+      '❌ Error:',
+      error instanceof Error ? error.message : String(error)
+    )
     process.exit(1)
   }
 }

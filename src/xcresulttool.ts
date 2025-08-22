@@ -175,11 +175,9 @@ async function getBuildResults(
     const output = await executeXcResultTool([
       'get',
       'build-results',
-      'summary',
       '--path',
       filePath,
-      '--format',
-      'json'
+      '--compact'
     ])
     return output ? (JSON.parse(output) as BuildResults) : undefined
   } catch (error) {
@@ -198,8 +196,7 @@ async function getTestResults(
       'summary',
       '--path',
       filePath,
-      '--format',
-      'json'
+      '--compact'
     ])
     return output ? (JSON.parse(output) as TestResults) : undefined
   } catch (error) {
@@ -218,8 +215,7 @@ async function getTestResultsDetailed(
       'tests',
       '--path',
       filePath,
-      '--format',
-      'json'
+      '--compact'
     ])
     return output ? (JSON.parse(output) as TestResultsDetailed) : undefined
   } catch (error) {

@@ -35,11 +35,11 @@ inputs:
   warningAnnotations:
     require: true
     description: "Add annotations for all warnings"
-    default: "false"
+    default: "true"
   errorAnnotations:
     require: true
     description: "Add annotations for all errors"
-    default: "false"    
+    default: "true"    
   showSDKInfo:
     required: true
     description: "Print the SDK Version"

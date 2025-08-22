@@ -22,15 +22,6 @@ function getSHA(): string {
   return sha
 }
 
-type Ownership = {
-  owner: string
-  repo: string
-}
-
-const formatDate = (): string => {
-  return new Date().toISOString()
-}
-
 async function run(): Promise<void> {
   try {
     const ownership = {
@@ -42,13 +33,13 @@ async function run(): Promise<void> {
     const inputFile: string = core.getInput('results')
     core.info(`Analyzing ${inputFile} ...`)
 
-    let settings = new xcresulttool.GenerationSettings()
+    const settings = new xcresulttool.GenerationSettings()
     settings.readActionSettings()
-    let output = await xcresulttool.generateGitHubCheckOutput(
+    const output = await xcresulttool.generateGitHubCheckOutput(
       settings,
       inputFile
     )
-    let conclusion = await xcresulttool.generateGitHubCheckConclusion(
+    const conclusion = await xcresulttool.generateGitHubCheckConclusion(
       settings,
       inputFile
     )
@@ -56,16 +47,16 @@ async function run(): Promise<void> {
       `Creating a new Run on ${ownership.owner}/${ownership.repo}@${sha}`
     )
 
-    let octokit = new ok.Octokit()
+    const octokit = new ok.Octokit()
 
-    let checkInfo: CheckCreate = {
+    const checkInfo: CheckCreate = {
       owner: github.context.repo.owner,
       repo: github.context.repo.repo,
       name: core.getInput('title'),
       status: 'completed',
-      conclusion: conclusion,
+      conclusion,
       head_sha: sha,
-      output: output
+      output
     }
     await octokit.checks.create(checkInfo)
     core.debug(`Done`)

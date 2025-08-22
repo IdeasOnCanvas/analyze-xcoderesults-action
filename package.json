@@ -11,7 +11,9 @@
     "lint": "eslint src/**/*.ts",
     "package": "ncc build --source-map --license licenses.txt",
     "test": "jest",
-    "all": "npm run build && npm run format && npm run package && npm test"
+    "all": "npm run build && npm run format && npm run package && npm test",
+    "cli": "ts-node src/cli.ts",
+    "analyze": "npm run cli"
   },
   "repository": {
     "type": "git",
@@ -27,11 +29,11 @@
   "dependencies": {
     "@actions/core": "^1.2.6",
     "@actions/exec": "^1.0.4",
-    "@actions/github": "^4.0.0",
+    "@actions/github": "^6.0.1",
     "@actions/http-client": "^1.0.11",
-    "@octokit/action": "^3.8.0",
+    "@octokit/action": "^8.0.2",
     "@octokit/plugin-rest-endpoint-methods": "^5.0.0",
-    "@octokit/rest": "^18.5.2",
+    "@octokit/rest": "^22.0.0",
     "@octokit/types": "^6.13.0"
   },
   "devDependencies": {
@@ -47,6 +49,7 @@
     "js-yaml": "^4.1.0",
     "prettier": "2.2.1",
     "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
     "typescript": "^4.2.3"
   }
 }

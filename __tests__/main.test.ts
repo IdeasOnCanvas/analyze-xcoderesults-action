@@ -31,7 +31,6 @@ test('test check output', async () => {
     new xcresultool.GenerationSettings(),
     FAILED_TEST_FILE
   )
-  let output = result.output
   expect(result.title).toBeDefined()
   expect(result.summary).toBeDefined()
   expect(result.annotations).toBeDefined()
@@ -54,9 +53,12 @@ test('check success outcome', async () => {
 })
 
 test('test generate warning annotations', async () => {
-  process.env['SHOWWARNINGS'] = 'true'
+  process.env['INPUT_WARNINGANNOTATIONS'] = 'true'
+  process.env['INPUT_TESTFAILUREANNOTATIONS'] = 'true'
+  let settings = new xcresultool.GenerationSettings()
+  settings.readActionSettings()
   let output = await xcresultool.generateGitHubCheckOutput(
-    new xcresultool.GenerationSettings(),
+    settings,
     FAILED_TEST_FILE
   )
   expect(output.annotations.length).toBe(2)

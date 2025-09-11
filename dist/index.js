@@ -269,16 +269,33 @@ function extractTestFailuresWithLocation(testResultsDetailed) {
             }
             // If this is a failed test case, look for failure messages in children
             if (node.nodeType === 'Test Case' &&
-                node.result === 'Failed' &&
-                node.children) {
-                const testName = node.name;
-                for (const child of node.children) {
-                    if (child.nodeType === 'Failure Message') {
-                        const failureInfo = parseFailureMessage(child.name, testName, currentTargetName);
-                        if (failureInfo) {
-                            failures.push(failureInfo);
+                node.result === 'Failed') {
+                // Use nodeIdentifier if available for better context (e.g., "MyFrameworkTests/testExample()")
+                // Otherwise fall back to just the name (e.g., "testExample()")
+                const testName = node.nodeIdentifier || node.name;
+                let hasFailureMessage = false;
+                // Look for failure messages in children if they exist
+                if (node.children) {
+                    for (const child of node.children) {
+                        if (child.nodeType === 'Failure Message') {
+                            const failureInfo = parseFailureMessage(child.name, testName, currentTargetName);
+                            if (failureInfo) {
+                                failures.push(failureInfo);
+                                hasFailureMessage = true;
+                            }
                         }
                     }
+                }
+                // If no failure message was found but the test is marked as failed,
+                // create a generic failure entry
+                if (!hasFailureMessage) {
+                    failures.push({
+                        testName,
+                        targetName: currentTargetName,
+                        failureText: 'Test failed (no detailed failure message available)',
+                        sourceFile: undefined,
+                        lineNumber: undefined
+                    });
                 }
             }
             // Recursively process children
@@ -325,21 +342,40 @@ function generateAnnotations(data, settings) {
     // Test failure annotations - use detailed test results with source locations
     if (settings.testFailureAnnotations) {
         const testFailuresWithLocation = extractTestFailuresWithLocation(data.testResultsDetailed);
-        for (const failure of testFailuresWithLocation) {
-            const pathPrefix = core.getInput('pathPrefix');
-            let filePath = failure.sourceFile || 'test-file';
-            // Remove path prefix if present and source file is available
-            if (failure.sourceFile && pathPrefix) {
-                filePath = failure.sourceFile; // Keep just the filename for test files
+        // Fallback to legacy testFailures if detailed results didn't yield any failures
+        // but we know there are test failures from the summary
+        if (testFailuresWithLocation.length === 0 && data.testResults?.testFailures && data.testResults.testFailures.length > 0) {
+            core.debug('Falling back to legacy testFailures format since detailed results yielded no failures');
+            for (const legacyFailure of data.testResults.testFailures) {
+                const testName = legacyFailure.testIdentifierString || legacyFailure.testName || 'Unknown Test';
+                annotations.push({
+                    path: 'test-file',
+                    start_line: 1,
+                    end_line: 1,
+                    annotation_level: 'failure',
+                    title: `${testName} failed`,
+                    message: legacyFailure.failureText || 'Test failed'
+                });
             }
-            annotations.push({
-                path: filePath,
-                start_line: failure.lineNumber || 1,
-                end_line: failure.lineNumber || 1,
-                annotation_level: 'failure',
-                title: `${failure.testName} failed`,
-                message: failure.failureText
-            });
+        }
+        else {
+            // Use detailed test results with source locations
+            for (const failure of testFailuresWithLocation) {
+                const pathPrefix = core.getInput('pathPrefix');
+                let filePath = failure.sourceFile || 'test-file';
+                // Remove path prefix if present and source file is available
+                if (failure.sourceFile && pathPrefix) {
+                    filePath = failure.sourceFile; // Keep just the filename for test files
+                }
+                annotations.push({
+                    path: filePath,
+                    start_line: failure.lineNumber || 1,
+                    end_line: failure.lineNumber || 1,
+                    annotation_level: 'failure',
+                    title: `${failure.testName} failed`,
+                    message: failure.failureText
+                });
+            }
         }
     }
     // Warning annotations
